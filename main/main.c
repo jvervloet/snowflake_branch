@@ -29,30 +29,62 @@ static const spi_host_device_t spi_hosts[NUM_SPI_STRIPS] = {SPI2_HOST, SPI3_HOST
 // Only the shape matters here, not any real-world size -- these coordinates
 // are unitless, just proportioned to match the reference diagram. +y points
 // outward from the snowflake center and +x is to the right when facing
-// outward. This mirrors the wiring order (LED numbers as given, 1-based):
-//   LED  1-5:  straight out
-//   LED  6-9:  branch left
-//   LED 10-13: branch right
-//   LED 14-16: straight out
-//   LED 17-19: branch left
-//   LED 20-22: branch right
-//   LED 23-25: straight out, to the tip
+// outward.
+//
+// Two physical branch revisions exist. The 25 physical LED locations on a
+// branch are identical between them -- only the wiring order (which LED
+// number lands at which location) differs. Select which one this build
+// targets with BRANCH_REVISION below:
+//   BRANCH_REV_1: LED  1-5:  straight out
+//                 LED  6-9:  branch left (near)
+//                 LED 10-13: branch right (near)
+//                 LED 14-16: straight out
+//                 LED 17-19: branch left (far)
+//                 LED 20-22: branch right (far)
+//                 LED 23-25: straight out, to the tip
+//   BRANCH_REV_2: LED  1-11: straight out (all spine locations, consecutively)
+//                 LED 12-14: upper-right twig (branch right (far) locations)
+//                 LED 15-18: lower-right twig (branch right (near) locations)
+//                 LED 19-22: lower-left twig (branch left (near) locations)
+//                 LED 23-25: upper-left twig (branch left (far) locations)
+#define BRANCH_REV_1  1
+#define BRANCH_REV_2  2
+#define BRANCH_REVISION  BRANCH_REV_2
+
+#if BRANCH_REVISION == BRANCH_REV_1
 static const float branch_led_pos[LEDS_PER_STRIP][2] = {
     // LED 1-5: straight out
     {0, 20}, {0, 45}, {0, 70}, {0, 95}, {0, 120},
-    // LED 6-9: branch left
+    // LED 6-9: branch left (near)
     {-20, 135}, {-40, 150}, {-60, 165}, {-80, 180},
-    // LED 10-13: branch right
+    // LED 10-13: branch right (near)
     {20, 135}, {40, 150}, {60, 165}, {80, 180},
     // LED 14-16: straight out
     {0, 155}, {0, 190}, {0, 225},
-    // LED 17-19: branch left
+    // LED 17-19: branch left (far)
     {-25, 240}, {-50, 255}, {-75, 270},
-    // LED 20-22: branch right
+    // LED 20-22: branch right (far)
     {25, 240}, {50, 255}, {75, 270},
     // LED 23-25: straight out, to the tip
     {0, 260}, {0, 300}, {0, 340},
 };
+#elif BRANCH_REVISION == BRANCH_REV_2
+static const float branch_led_pos[LEDS_PER_STRIP][2] = {
+    // LED 1-11: straight out (same 11 spine locations as rev 1, wired
+    // consecutively instead of being interrupted by the twigs)
+    {0, 20}, {0, 45}, {0, 70}, {0, 95}, {0, 120}, {0, 155}, {0, 190}, {0, 225}, {0, 260}, {0, 300}, {0, 340},
+    // LED 12-14: upper-right twig (rev 1's branch right (far) locations)
+    {25, 240}, {50, 255}, {75, 270},
+    // LED 15-18: lower-right twig (rev 1's branch right (near) locations)
+    {20, 135}, {40, 150}, {60, 165}, {80, 180},
+    // LED 19-22: lower-left twig (rev 1's branch left (near) locations)
+    {-20, 135}, {-40, 150}, {-60, 165}, {-80, 180},
+    // LED 23-25: upper-left twig (rev 1's branch left (far) locations)
+    {-25, 240}, {-50, 255}, {-75, 270},
+};
+#else
+#error "Unknown BRANCH_REVISION"
+#endif
 
 // Outward-facing angle of each branch (degrees, standard math convention:
 // 0 = +X/right, 90 = +Y/up, CCW positive), in strip_gpio[] order. Confirmed

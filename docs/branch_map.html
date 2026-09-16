@@ -11,6 +11,8 @@
   --right:#a86a1a;
   --muted:#5b6d69;
   --border:#c5d3d0;
+  --accent:#16232c;
+  --accent-ink:#eef3f1;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -23,6 +25,8 @@
     --right:#e0ab5c;
     --muted:#86a29b;
     --border:#22322d;
+    --accent:#dfeae6;
+    --accent-ink:#0d1613;
   }
 }
 :root[data-theme="dark"]{
@@ -35,6 +39,8 @@
   --right:#e0ab5c;
   --muted:#86a29b;
   --border:#22322d;
+  --accent:#dfeae6;
+  --accent-ink:#0d1613;
 }
 
 *{box-sizing:border-box;}
@@ -88,6 +94,35 @@ h1{
   line-height:1.55;
 }
 .dek strong{ color:var(--ink); font-weight:600; }
+
+.revtoggle{
+  display:inline-flex;
+  gap:2px;
+  padding:3px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:999px;
+  width:fit-content;
+}
+.revtoggle button{
+  appearance:none;
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.78rem;
+  font-weight:600;
+  letter-spacing:0.02em;
+  padding:7px 16px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:background 0.15s ease, color 0.15s ease;
+}
+.revtoggle button:hover{ color:var(--ink); }
+.revtoggle button.active{
+  background:var(--accent);
+  color:var(--accent-ink);
+}
 
 .panels{
   display:grid;
@@ -203,17 +238,16 @@ h1{
     <h1>Snowflake Branch Map</h1>
     <div class="meta">
       6 branches &times; 25 LEDs &nbsp;&middot;&nbsp; <b>150 total</b><br>
-      grid&nbsp;40&times;40 &nbsp;&middot;&nbsp; rev. corrected topology
+      grid&nbsp;40&times;40 &nbsp;&middot;&nbsp; <span id="meta-topology">zigzag topology</span>
     </div>
   </div>
 
-  <p class="dek">
-    Rebuilt from the corrected LED order you gave: <strong>LED 1&ndash;5 straight, 6&ndash;9 left,
-    10&ndash;13 right, 14&ndash;16 straight, 17&ndash;19 left, 20&ndash;22 right, 23&ndash;25 straight
-    to the tip.</strong> Left panel is one branch with every LED numbered and wired in firmware
-    order; right panel is the full assembly with the same 40&times;40 grid the firmware uses to
-    place each LED into a cell.
-  </p>
+  <div class="revtoggle" id="rev-toggle" role="tablist" aria-label="Board revision">
+    <button type="button" data-rev="1">BRANCH_REV_1</button>
+    <button type="button" data-rev="2">BRANCH_REV_2</button>
+  </div>
+
+  <p class="dek" id="dek-text"></p>
 
   <div class="panels">
     <div class="panel">
@@ -221,11 +255,7 @@ h1{
       <h2>One branch</h2>
       <div class="sub">numbered 1&ndash;25, wiring order as drawn</div>
       <svg id="branch-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="legend">
-        <span><i class="swatch" style="background:var(--trace)"></i>straight (1&ndash;5, 14&ndash;16, 23&ndash;25)</span>
-        <span><i class="swatch" style="background:var(--left)"></i>left (6&ndash;9, 17&ndash;19)</span>
-        <span><i class="swatch" style="background:var(--right)"></i>right (10&ndash;13, 20&ndash;22)</span>
-      </div>
+      <div class="legend" id="branch-legend"></div>
     </div>
 
     <div class="panel">
@@ -233,46 +263,37 @@ h1{
       <h2>Full assembly + grid</h2>
       <div class="sub">all 150 LEDs, 40&times;40 image grid, dashed = grid_extent radius</div>
       <svg id="snowflake-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="legend">
-        <span><i class="swatch" style="background:var(--trace)"></i>straight</span>
-        <span><i class="swatch" style="background:var(--left)"></i>left twig</span>
-        <span><i class="swatch" style="background:var(--right)"></i>right twig</span>
-        <span><i class="swatch" style="background:var(--border)"></i>grid cell lines</span>
-      </div>
+      <div class="legend" id="snowflake-legend"></div>
     </div>
   </div>
 
-  <div class="spec">
-    <div class="row"><div class="range tabular">LED 01&ndash;05</div><div class="label"><span class="dot" style="background:var(--trace)"></span>straight out</div></div>
-    <div class="row"><div class="range tabular">LED 06&ndash;09</div><div class="label"><span class="dot" style="background:var(--left)"></span>branch left</div></div>
-    <div class="row"><div class="range tabular">LED 10&ndash;13</div><div class="label"><span class="dot" style="background:var(--right)"></span>branch right</div></div>
-    <div class="row"><div class="range tabular">LED 14&ndash;16</div><div class="label"><span class="dot" style="background:var(--trace)"></span>straight out</div></div>
-    <div class="row"><div class="range tabular">LED 17&ndash;19</div><div class="label"><span class="dot" style="background:var(--left)"></span>branch left</div></div>
-    <div class="row"><div class="range tabular">LED 20&ndash;22</div><div class="label"><span class="dot" style="background:var(--right)"></span>branch right</div></div>
-    <div class="row"><div class="range tabular">LED 23&ndash;25</div><div class="label"><span class="dot" style="background:var(--trace)"></span>straight to tip</div></div>
-  </div>
+  <div class="spec" id="spec-grid"></div>
 
   <div class="note">
     <b>How to check it:</b> on the physical snowflake, walk LED 1 to LED 25 on any one branch and
-    confirm it matches the left panel &mdash; out along the spine, out-and-back on the left twig,
-    out-and-back on the right twig, more spine, second left twig, second right twig, then spine to
-    the tip. The right panel is that same branch rotated five more times (angles set in
-    <code>branch_angle_deg[]</code>) with the 40&times;40 image grid drawn under it, exactly as
-    <code>build_led_positions()</code> computes it in firmware.
-    <div class="foot">If a branch's twigs point the wrong way once flashed, it's <code>branch_angle_deg[]</code>;
-    if the twigs themselves are the wrong shape, it's <code>branch_led_pos[]</code> &mdash; tell me which LED numbers look off and only that table needs to change.</div>
+    confirm it matches the left panel. The right panel is that same branch rotated five more times
+    (angles set in <code>branch_angle_deg[]</code>) with the 40&times;40 image grid drawn under it,
+    exactly as <code>build_led_positions()</code> computes it in firmware.
+    <div class="foot">Which layout a board uses is picked at build time with <code>BRANCH_REVISION</code>
+    in <code>main.c</code> (<code>BRANCH_REV_1</code> or <code>BRANCH_REV_2</code>). If a branch's twigs
+    point the wrong way once flashed, it's <code>branch_angle_deg[]</code>; if the twigs themselves are
+    the wrong shape, it's <code>branch_led_pos[]</code> for the active revision.</div>
   </div>
 
 </div>
 
 <script>
 (function(){
-  const LEDS_PER_STRIP = 25;
   const NUM_STRIPS = 6;
   const GRID_SIZE = 40;
 
-  // Mirrors branch_led_pos[] in main.c exactly.
-  const branchLedPos = [
+  // Mirrors branch_angle_deg[] in main.c exactly -- shared by both revisions.
+  const branchAngleDeg = [90, 150, -150, -90, -30, 30];
+
+  const colorVar = { straight:'--trace', left:'--left', right:'--right' };
+
+  // Mirrors branch_led_pos[] for BRANCH_REV_1 in main.c exactly.
+  const REV1_POS = [
     [0,20],[0,45],[0,70],[0,95],[0,120],
     [-20,135],[-40,150],[-60,165],[-80,180],
     [20,135],[40,150],[60,165],[80,180],
@@ -281,19 +302,77 @@ h1{
     [25,240],[50,255],[75,270],
     [0,260],[0,300],[0,340],
   ];
-  // Mirrors branch_angle_deg[] in main.c exactly.
-  const branchAngleDeg = [90, 150, -150, -90, -30, 30];
 
-  function segmentFor(i){
-    if (i <= 4) return 'straight';
-    if (i <= 8) return 'left';
-    if (i <= 12) return 'right';
-    if (i <= 15) return 'straight';
-    if (i <= 18) return 'left';
-    if (i <= 21) return 'right';
-    return 'straight';
+  // Mirrors branch_led_pos[] for BRANCH_REV_2 in main.c exactly. Same 25
+  // physical locations as REV1_POS, just reordered -- rev 2 only changes
+  // wiring order, not where the LEDs physically sit.
+  const REV2_POS = [
+    [0,20],[0,45],[0,70],[0,95],[0,120],[0,155],[0,190],[0,225],[0,260],[0,300],[0,340],
+    [25,240],[50,255],[75,270],
+    [20,135],[40,150],[60,165],[80,180],
+    [-20,135],[-40,150],[-60,165],[-80,180],
+    [-25,240],[-50,255],[-75,270],
+  ];
+
+  const REVISIONS = {
+    1: {
+      topology: 'zigzag topology',
+      dek: `Rebuilt from the corrected LED order you gave: <strong>LED 1&ndash;5 straight, 6&ndash;9 left,
+        10&ndash;13 right, 14&ndash;16 straight, 17&ndash;19 left, 20&ndash;22 right, 23&ndash;25 straight
+        to the tip.</strong> Left panel is one branch with every LED numbered and wired in firmware
+        order; right panel is the full assembly with the same 40&times;40 grid the firmware uses to
+        place each LED into a cell.`,
+      ledPos: REV1_POS,
+      segments: [
+        {count:5, cat:'straight', label:'straight out'},
+        {count:4, cat:'left', label:'branch left'},
+        {count:4, cat:'right', label:'branch right'},
+        {count:3, cat:'straight', label:'straight out'},
+        {count:3, cat:'left', label:'branch left'},
+        {count:3, cat:'right', label:'branch right'},
+        {count:3, cat:'straight', label:'straight to tip'},
+      ],
+      legend: [
+        {cat:'straight', text:'straight (1–5, 14–16, 23–25)'},
+        {cat:'left', text:'left (6–9, 17–19)'},
+        {cat:'right', text:'right (10–13, 20–22)'},
+      ],
+    },
+    2: {
+      topology: 'sequential-twig topology',
+      dek: `Second board revision. The 25 physical LED locations on a branch are <strong>identical
+        to rev 1</strong> &mdash; only the wiring order changes, so the two "Full assembly" panels
+        overlay exactly. New order: <strong>LED 1&ndash;11 straight out (all spine locations, wired
+        consecutively instead of being interrupted by the twigs), then 12&ndash;14 upper-right twig,
+        15&ndash;18 lower-right twig, 19&ndash;22 lower-left twig, 23&ndash;25 upper-left twig</strong>
+        &mdash; each twig picking up the same locations rev 1 used for its near/far left and right
+        branches. Left panel is one branch numbered end to end in this new order; right panel is the
+        full 150-LED assembly on the 40&times;40 image grid.`,
+      ledPos: REV2_POS,
+      segments: [
+        {count:11, cat:'straight', label:'straight out'},
+        {count:3, cat:'right', label:'upper-right twig'},
+        {count:4, cat:'right', label:'lower-right twig'},
+        {count:4, cat:'left', label:'lower-left twig'},
+        {count:3, cat:'left', label:'upper-left twig'},
+      ],
+      legend: [
+        {cat:'straight', text:'straight (1–11)'},
+        {cat:'left', text:'left twigs (19–22, 23–25)'},
+        {cat:'right', text:'right twigs (12–14, 15–18)'},
+      ],
+    },
+  };
+
+  // Expands a revision's `segments` (run-length encoded) into a flat
+  // per-LED-index {cat, label} array, matching branch_led_pos[] order.
+  function expandSegments(segments){
+    const out = [];
+    segments.forEach(seg => {
+      for (let i = 0; i < seg.count; i++) out.push({cat: seg.cat, label: seg.label});
+    });
+    return out;
   }
-  const segColorVar = { straight:'--trace', left:'--left', right:'--right' };
 
   function rotate(x, y, angleDeg){
     const delta = (angleDeg - 90) * Math.PI / 180;
@@ -301,32 +380,30 @@ h1{
     return [x*c - y*s, x*s + y*c];
   }
 
-  // Full 150-LED layout, mirrors build_led_positions() in main.c.
-  const allLeds = [];
-  for (let strip = 0; strip < NUM_STRIPS; strip++){
-    for (let p = 0; p < LEDS_PER_STRIP; p++){
-      const [x, y] = rotate(branchLedPos[p][0], branchLedPos[p][1], branchAngleDeg[strip]);
-      allLeds.push({x, y, strip, p, seg: segmentFor(p)});
-    }
-  }
-  const gridExtent = allLeds.reduce((m, l) => Math.max(m, Math.hypot(l.x, l.y)), 0);
-
   const NS = 'http://www.w3.org/2000/svg';
   function el(tag, attrs){
     const e = document.createElementNS(NS, tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]);
     return e;
   }
+  function clear(node){ while (node.firstChild) node.removeChild(node.firstChild); }
   function cssVar(name){
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
 
+  function legendHtml(items){
+    return items.map(it =>
+      `<span><i class="swatch" style="background:${cssVar(colorVar[it.cat])}"></i>${it.text}</span>`
+    ).join('');
+  }
+
   // ---- Left panel: single branch, numbered ----
-  (function drawBranch(){
+  function drawBranch(ledPos, perLed){
     const svg = document.getElementById('branch-svg');
+    clear(svg);
     const pad = 14;
-    const xs = branchLedPos.map(p => p[0]);
-    const ys = branchLedPos.map(p => p[1]);
+    const xs = ledPos.map(p => p[0]);
+    const ys = ledPos.map(p => p[1]);
     const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
     const minY = -pad, maxY = Math.max(...ys) + pad;
     const w = maxX - minX, h = maxY - minY;
@@ -337,16 +414,15 @@ h1{
     const g = el('g', {});
     // wiring path
     let d = '';
-    branchLedPos.forEach((p, i) => {
+    ledPos.forEach((p, i) => {
       const [sx, sy] = toSvg(p[0], p[1]);
       d += (i === 0 ? 'M' : 'L') + sx.toFixed(2) + ' ' + sy.toFixed(2) + ' ';
     });
     g.appendChild(el('path', { d, fill:'none', stroke: cssVar('--muted'), 'stroke-width': 0.9, 'stroke-opacity': 0.6 }));
 
-    branchLedPos.forEach((p, i) => {
+    ledPos.forEach((p, i) => {
       const [sx, sy] = toSvg(p[0], p[1]);
-      const seg = segmentFor(i);
-      const color = cssVar(segColorVar[seg]);
+      const color = cssVar(colorVar[perLed[i].cat]);
       g.appendChild(el('circle', { cx: sx, cy: sy, r: 3.6, fill: color }));
       const label = el('text', {
         x: sx, y: sy - 5.5, 'text-anchor':'middle',
@@ -356,11 +432,23 @@ h1{
       g.appendChild(label);
     });
     svg.appendChild(g);
-  })();
+  }
 
   // ---- Right panel: full assembly + grid ----
-  (function drawSnowflake(){
+  function drawSnowflake(ledPos, perLed){
     const svg = document.getElementById('snowflake-svg');
+    clear(svg);
+
+    const LEDS_PER_STRIP = ledPos.length;
+    const allLeds = [];
+    for (let strip = 0; strip < NUM_STRIPS; strip++){
+      for (let p = 0; p < LEDS_PER_STRIP; p++){
+        const [x, y] = rotate(ledPos[p][0], ledPos[p][1], branchAngleDeg[strip]);
+        allLeds.push({x, y, cat: perLed[p].cat});
+      }
+    }
+    const gridExtent = allLeds.reduce((m, l) => Math.max(m, Math.hypot(l.x, l.y)), 0);
+
     const pad = gridExtent * 0.12;
     const half = gridExtent + pad;
     svg.setAttribute('viewBox', `${-half} ${-half} ${half*2} ${half*2}`);
@@ -388,10 +476,64 @@ h1{
       g.appendChild(el('path', { d, fill:'none', stroke: cssVar('--muted'), 'stroke-width': half*0.0026, 'stroke-opacity':0.5 }));
     }
     allLeds.forEach(led => {
-      g.appendChild(el('circle', { cx: led.x, cy: -led.y, r: half*0.011, fill: cssVar(segColorVar[led.seg]) }));
+      g.appendChild(el('circle', { cx: led.x, cy: -led.y, r: half*0.011, fill: cssVar(colorVar[led.cat]) }));
     });
 
     svg.appendChild(g);
-  })();
+  }
+
+  function drawSpec(segments){
+    const grid = document.getElementById('spec-grid');
+    clear(grid);
+    let n = 1;
+    segments.forEach(seg => {
+      const from = n, to = n + seg.count - 1;
+      n = to + 1;
+      const row = el('div', { class:'row' });
+      const range = document.createElement('div');
+      range.className = 'range tabular';
+      range.textContent = `LED ${String(from).padStart(2,'0')}–${String(to).padStart(2,'0')}`;
+      const label = document.createElement('div');
+      label.className = 'label';
+      const dot = el('span', { class:'dot', style:`background:${cssVar(colorVar[seg.cat])}` });
+      label.appendChild(dot);
+      label.appendChild(document.createTextNode(seg.label));
+      row.appendChild(range);
+      row.appendChild(label);
+      grid.appendChild(row);
+    });
+  }
+
+  function render(revKey){
+    const rev = REVISIONS[revKey];
+    const perLed = expandSegments(rev.segments);
+
+    document.getElementById('meta-topology').textContent = rev.topology;
+    document.getElementById('dek-text').innerHTML = rev.dek;
+    document.getElementById('branch-legend').innerHTML = legendHtml(rev.legend);
+    document.getElementById('snowflake-legend').innerHTML =
+      legendHtml(rev.legend) + `<span><i class="swatch" style="background:${cssVar('--border')}"></i>grid cell lines</span>`;
+
+    drawBranch(rev.ledPos, perLed);
+    drawSnowflake(rev.ledPos, perLed);
+    drawSpec(rev.segments);
+
+    document.querySelectorAll('#rev-toggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.rev === String(revKey));
+    });
+
+    try { localStorage.setItem('branch-map-rev', String(revKey)); } catch (e) {}
+  }
+
+  document.querySelectorAll('#rev-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => render(Number(btn.dataset.rev)));
+  });
+
+  let initialRev = 1;
+  try {
+    const saved = localStorage.getItem('branch-map-rev');
+    if (saved === '1' || saved === '2') initialRev = Number(saved);
+  } catch (e) {}
+  render(initialRev);
 })();
 </script>
